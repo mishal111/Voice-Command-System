@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Timepiece Emporium</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #d2a679;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 150px;
+            background-color: #b98b59;
+            padding-top: 50px;
+            text-align: center;
+        }
+        .sidebar a {
+            display: block;
+            padding: 10px;
+            color: black;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .sidebar a:hover {
+            background-color: #d9b38c;
+        }
+        .content {
+            flex: 1;
+            text-align: center;
+            padding: 50px;
+            background-color: #f5e6d3;
+        }
+        h1 {
+            color: #4b2e05;
+        }
+        table {
+            margin: 30px auto;
+            border-collapse: collapse;
+            width: 60%;
+            font-size: 18px;
+        }
+        table, th, td {
+            border: 1px solid #4b2e05;
+        }
+        th, td {
+            padding: 10px;
+        }
+        th {
+            background-color: #b98b59;
+            color: white;
+        }
+        footer {
+            margin-top: 50px;
+            font-size: 14px;
+            color: #4b2e05;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <a href="home.html">Home</a>
+            <a href="collection.html">Collection</a>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <img src="logo.png" alt="Logo" width="80"><br>
+            <h1>Elite Timepiece Emporium</h1>
+            <h2>Watch Collection</h2>
+
+            <table>
+                <tr>
+                    <th>Watch Model</th>
+                    <th>Movement</th>
+                    <th>Strap Material</th>
+                </tr>
+                <tr>
+                    <td>Classic</td>
+                    <td>Quartz</td>
+                    <td>Leather</td>
+                </tr>
+                <tr>
+                    <td>Driver</td>
+                    <td>Automatic</td>
+                    <td>Rubber</td>
+                </tr>
+                <tr>
+                    <td>Luxury</td>
+                    <td>Automatic</td>
+                    <td>Stainless Steel</td>
+                </tr>
+            </table>
+
+            <footer>© ET Emporium</footer>
+        </div>
+    </div>
+</body>
+</html>
