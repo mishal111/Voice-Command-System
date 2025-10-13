@@ -83,4 +83,4 @@ def server_handle():
     server_handle_thread=threading.Thread(target=server_handle)
     server_handle_thread.start()
 
-def receive():
+def receive_files():
