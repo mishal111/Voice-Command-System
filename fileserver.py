@@ -106,6 +106,9 @@ def receive_files():
     except Exception as e:
         print(f"Error receiving file : {e}")
 
+    receive_thread=threading.Thread(target=receive_files)
+    receive_thread.start()
+
 
 def send_files():
     try:
@@ -123,3 +126,6 @@ def send_files():
 
     except FileNotFoundError:
         print(f"{file_name} is not found in the server")
+
+    send_thread=threading.Thread(target=send_files)
+    send_thread.start()
