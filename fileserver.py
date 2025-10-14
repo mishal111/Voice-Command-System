@@ -84,3 +84,19 @@ def server_handle():
     server_handle_thread.start()
 
 def receive_files():
+    try:
+        file_info=server.recv(1024).decode('ascii')
+        if not file_info:
+            return
+        file_name,file_size_str=file_info.split(',')
+        file_size=int(file_size_str)
+
+        print(f"Receiving {file_name},{file_size} bytes...")
+
+        with open(f"received_{file_name}",'wb') as f:
+            bytes_received=0
+            while bytes_received<file_size:
+                byte_read=server.recv(4096)
+                if not byte_read:
+                    break
+                
