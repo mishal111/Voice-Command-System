@@ -36,20 +36,20 @@ def authenticate_client(clientUsername,clientPassword):
 def handle_clients():
     while True:
         client,address=server.accept()
-        client.send("UN".encode('ascii'))
-        clientUsername=client.recv(1024).decode('ascii')
-        client.send("PASS ".encode('ascii'))
-        clientPassword=client.recv(1024).decode('ascii')
+        client.send("UN".encode())
+        clientUsername=client.recv(1024).decode()
+        client.send("PASS ".encode())
+        clientPassword=client.recv(1024).decode()
         if authenticate_client(clientUsername,clientPassword):
             print("Client authenticated ")
-            client.send("Authentication Success".encode('ascii'))
+            client.send("Authentication Success".encode())
             clients.append(client)
             usernames.append(clientUsername)
             server.close()
 
         else:
             print("Client authentication failed")
-            client.send("Authentication failed".encode('ascii'))
+            client.send("Authentication failed".encode())
             client.close()
             break
 
@@ -85,7 +85,7 @@ def server_handle():
 
 def receive_files():
     try:
-        file_info=server.recv(1024).decode('ascii')
+        file_info=server.recv(1024).decode()
         if not file_info:
             return
         file_name,file_size_str=file_info.split(',')
@@ -93,10 +93,33 @@ def receive_files():
 
         print(f"Receiving {file_name},{file_size} bytes...")
 
-        with open(f"received_{file_name}",'wb') as f:
+        with open(f"received_{file_name}",'wb') as file:
             bytes_received=0
             while bytes_received<file_size:
                 byte_read=server.recv(4096)
                 if not byte_read:
                     break
-                
+                file.write(byte_read)
+                bytes_received+=len(byte_read)
+            print(f"{file_name} received Size:{file_size}")
+    
+    except Exception as e:
+        print(f"Error receiving file : {e}")
+
+
+def send_files():
+    try:
+        file_name=server.recv(1024).decode()
+        file_size=os.path.getsize(file_name)
+        server.sendall(f"{file_name},{file_size}".encode())
+
+        with open(file_name,"rb") as file:
+            while True:
+                byte_read=file.read(4096)
+                if not byte_read:
+                    break
+                server.sendall(byte_read)
+            print(f"{file_name}:{file_size} sent to the client")
+
+    except FileNotFoundError:
+        print(f"{file_name} is not found in the server")
