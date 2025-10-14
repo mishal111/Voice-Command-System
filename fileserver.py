@@ -52,9 +52,17 @@ def handle_clients():
             client.send("Authentication failed".encode())
             client.close()
             break
+        client_command = server.recv(1024).decode()
+        if client_command == "LIST":
+            client.sendall(os.listdir())
+        elif client_command == "DOWNLOAD":
+            upload_files()
+        elif client_command == "UPLOAD":
+            download_files()
+        
 
-        handleThread=threading.Thread(target=handle_clients)
-        handleThread.start()
+    handleThread=threading.Thread(target=handle_clients)
+    handleThread.start()
 
 def server_handle():
     if authenticate_admin():
@@ -83,7 +91,7 @@ def server_handle():
     server_handle_thread=threading.Thread(target=server_handle)
     server_handle_thread.start()
 
-def receive_files():
+def download_files():
     try:
         file_info=server.recv(1024).decode()
         if not file_info:
@@ -106,11 +114,11 @@ def receive_files():
     except Exception as e:
         print(f"Error receiving file : {e}")
 
-    receive_thread=threading.Thread(target=receive_files)
+    receive_thread=threading.Thread(target=download_files)
     receive_thread.start()
 
 
-def send_files():
+def upload_files():
     try:
         file_name=server.recv(1024).decode()
         file_size=os.path.getsize(file_name)
@@ -127,5 +135,5 @@ def send_files():
     except FileNotFoundError:
         print(f"{file_name} is not found in the server")
 
-    send_thread=threading.Thread(target=send_files)
+    send_thread=threading.Thread(target=upload_files)
     send_thread.start()
