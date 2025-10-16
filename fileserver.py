@@ -3,13 +3,14 @@ import threading
 import os
 import getpass
 
-host = '127.0.0.1'
-port = 55557
+host ='127.0.0.1'
+port = 55555
 admin_pass='qwerty'
 
 server=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 server.bind((host,port))
 server.listen(1)
+
 
 clients=[]
 usernames=[]
@@ -19,52 +20,57 @@ def authenticate_admin():
         return True
     else:
         return False
+    
+print(f"Server is listening on {host}:{port}...")
+
 def authenticate_client(clientUsername,clientPassword):
-    with open('~/Documents/pass.txt','r') as file:
+    with open(os.path.expanduser('~/Documents/pass.txt'),'r') as file:
         for line in file:
-            line.strip()
+            line=line.strip()
             if '=' in line:
-                Susername,Spassword = line.split('=',1)
-                username=Susername.strip()
-                password=Spassword.strip()
-            if clientUsername==username and clientPassword==password:
-                return True
-            else:
-                return False
+                username,password = line.split('=',1)
+                username=username.strip()
+                password=password.strip()
+                if clientUsername==username and clientPassword==password:
+                    return True
+            
+    return False
 
 
-def handle_clients():
+def client_handle():
+
     while True:
         client,address=server.accept()
+
         client.send("UN".encode())
         clientUsername=client.recv(1024).decode()
         client.send("PASS ".encode())
         clientPassword=client.recv(1024).decode()
+
         if authenticate_client(clientUsername,clientPassword):
             print("Client authenticated ")
-            client.send("Authentication Success".encode())
+            client.send("AUTH SUCCESS".encode())
             clients.append(client)
             usernames.append(clientUsername)
-            server.close()
 
         else:
             print("Client authentication failed")
             client.send("Authentication failed".encode())
             client.close()
             break
-        client_command = server.recv(1024).decode()
+        client_command = client.recv(1024).decode()
         if client_command == "LIST":
-            client.sendall(os.listdir())
+            files=os.listdir()
+            client.sendall("\n".join(files).encode())
+
         elif client_command == "DOWNLOAD":
             upload_files()
+
         elif client_command == "UPLOAD":
             download_files()
         
-
-    handleThread=threading.Thread(target=handle_clients)
-    handleThread.start()
-
 def server_handle():
+
     if authenticate_admin():
         while True:
             server_input=input("> ")
@@ -75,6 +81,16 @@ def server_handle():
                 print(os.listdir())
             elif server_input=='CLIENT':
                 print(f"{clients[0]}:{usernames[0]}")
+            elif server_input=="EXIT":
+                print("Shutting Down Server")
+                for client in clients:
+                    try:
+                        client.sendall("SERVER_SHUTDOWN".encode())
+                        client.close()
+                    except:
+                        pass
+                server.close()
+                os._exit(0)
             elif server_input == 'DELETE':
                 rmFile=input("> Name of the file >> ")
                 try:
@@ -84,56 +100,59 @@ def server_handle():
                 except FileNotFoundError:
                     print(f"Error: {rmFile} does not exist")
 
-                    
     else:
         print("Authentication failed")
     
-    server_handle_thread=threading.Thread(target=server_handle)
-    server_handle_thread.start()
-
 def download_files():
-    try:
-        file_info=server.recv(1024).decode()
-        if not file_info:
-            return
-        file_name,file_size_str=file_info.split(',')
-        file_size=int(file_size_str)
+    for client in clients:
+        try:
+            file_info=client.recv(1024).decode()
+            if not file_info:
+                return
+            elif file_info:
+                client.sendall("META_DATA_ACK".encode())
 
-        print(f"Receiving {file_name},{file_size} bytes...")
+            file_name,file_size_str=file_info.split(',')
+            file_size=int(file_size_str)
 
-        with open(f"received_{file_name}",'wb') as file:
-            bytes_received=0
-            while bytes_received<file_size:
-                byte_read=server.recv(4096)
-                if not byte_read:
-                    break
-                file.write(byte_read)
-                bytes_received+=len(byte_read)
-            print(f"{file_name} received Size:{file_size}")
-    
-    except Exception as e:
-        print(f"Error receiving file : {e}")
+            print(f"Receiving {file_name},{file_size} bytes...")
 
-    receive_thread=threading.Thread(target=download_files)
-    receive_thread.start()
-
+            with open(f"received_{file_name}",'wb') as file:
+                bytes_received=0
+                while bytes_received<file_size:
+                    byte_read=client.recv(4096)
+                    if not byte_read:
+                        break
+                    file.write(byte_read)
+                    bytes_received+=len(byte_read)
+                print(f"{file_name} received Size:{file_size}")
+        
+        except Exception as e:
+            print(f"Error receiving file : {e}")
 
 def upload_files():
-    try:
-        file_name=server.recv(1024).decode()
-        file_size=os.path.getsize(file_name)
-        server.sendall(f"{file_name},{file_size}".encode())
+    for client in clients:
+        try:
+            file_name=client.recv(1024).decode()
+            file_size=os.path.getsize(file_name)
+            client.sendall(f"{file_name},{file_size}".encode())
 
-        with open(file_name,"rb") as file:
-            while True:
-                byte_read=file.read(4096)
-                if not byte_read:
-                    break
-                server.sendall(byte_read)
-            print(f"{file_name}:{file_size} sent to the client")
+            if client.recv(1024).decode().startswith("META_DATA_ACK"):
+                try:
 
-    except FileNotFoundError:
-        print(f"{file_name} is not found in the server")
+                    with open(file_name,"rb") as file:
+                        while True:
+                            byte_read=file.read(4096)
+                            if not byte_read:
+                                break
+                            client.sendall(byte_read)
+                        print(f"{file_name}:{file_size} sent to the client")
 
-    send_thread=threading.Thread(target=upload_files)
-    send_thread.start()
+                except FileNotFoundError:
+                    print(f"{file_name} is not found in the server")
+
+        except Exception as e:
+            print(f"Upload Failed: {e}")
+
+threading.Thread(target=server_handle, daemon=True).start()
+threading.Thread(target=client_handle).start()
