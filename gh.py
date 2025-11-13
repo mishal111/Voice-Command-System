@@ -38,7 +38,7 @@ SERVER = "smtp.gmail.com"
 PORT = 587
 FROM = 'hiccupshelby@gmail.com'
 TO = "mishalsafeek@gmail.com"
-PASS = 'flaz bpla mvtd rvdm '
+PASS = ' '
 
 msg = MIMEMultipart()
 
